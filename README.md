@@ -40,7 +40,7 @@ This is helpful for:
 - Showcasing interaction flow in a safe, offline environment
 - Preventing accidental exposure of sensitive device logs
 
-### Run the demo:
+## Run the demo:
 
 ```bash
 python3 swipe_demo.py
