@@ -1,21 +1,31 @@
 # Android Accessibility Stress Test
 
-A minimal ADB-based script for stress testing Android accessibility services through long-duration swipe simulations.
+A Python script for stress testing Android accessibility services, especially TalkBack, using repeated ADB key events and log analysis.
 
 ## Overview
 
-This project simulates left/right swipe gestures on Android devices using ADB, targeting accessibility frameworks (e.g. screen readers) to verify their stability under continuous interaction.
+This tool simulates accessibility interactions by repeatedly sending `KEYCODE_TAB` events via ADB. It captures the full logcat output during the test, searches for relevant keywords (like "TalkBack", "Accessibility", "focus"), and generates both Markdown and HTML reports.
 
-Originally designed for a personal use case involving long-hour TalkBack stress testing.
+Originally built for long-session stress testing of accessibility frameworks under continuous input.
 
 ## Features
 
-- Runs swipe loops for a configurable duration
-- Uses ADB shell commands (no dependencies beyond Python + ADB)
-- Simple CLI interface for direction and duration
-- Terminal output with basic timestamps
+- Repeated `adb shell input keyevent` to simulate focus movement
+- Captures complete logcat output without filtering by tag
+- Keyword-based log analysis (configurable)
+- Generates Markdown and HTML reports summarizing test results
+- Automatically clears the previous logcat buffer before each run
+- Minimal dependencies: only Python, ADB, and jinja2
+
+## Requirements
+
+- Python 3.6 or higher
+- ADB installed and accessible from your PATH
+- `pip install jinja2`
 
 ## Usage
 
+Run the script directly:
+
 ```bash
-python3 swipe_loop.py --direction left --duration 3600
+python3 swipe_stress.py
