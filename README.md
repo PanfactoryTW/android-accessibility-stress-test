@@ -29,3 +29,18 @@ Run the script directly:
 
 ```bash
 python3 swipe_stress.py
+
+## Demo Mode (No Device Required)
+
+If you want to demonstrate the script logic without connecting a physical device or emulator, use the `swipe_demo.py` script. It simulates the interaction flow without actually calling ADB or generating reports/logs.
+
+This is helpful for:
+
+- Internal demos where log access is restricted
+- Showcasing interaction flow in a safe, offline environment
+- Preventing accidental exposure of sensitive device logs
+
+### Run the demo:
+
+```bash
+python3 swipe_demo.py
