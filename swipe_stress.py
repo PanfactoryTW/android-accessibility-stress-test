@@ -7,10 +7,9 @@ from jinja2 import Template  # pip install jinja2
 
 # === Configuration ===
 KEYCODE = 61  # Simulate TAB key, commonly used for TalkBack focus
-ITERATIONS = 50  # Number of repeated keyevents
-SLEEP_SECONDS = 0.2  # Interval between keyevents
-LOG_DURATION = 15  # How long to record logcat (in seconds)
-LOG_TAG = "TalkBack"  # Can be replaced with "Accessibility"
+ITERATIONS = 50
+SLEEP_SECONDS = 0.2
+LOG_DURATION = 15
 LOG_DIR = "logs"
 REPORT_DIR = "reports"
 EXPECTED_KEYWORDS = ["Accessibility", "TalkBack", "focus"]
@@ -24,12 +23,14 @@ def send_keyevent(keycode: int):
     )
     assert result.returncode == 0, f"Failed to send keyevent {keycode}"
 
-def start_logcat_dump(log_file: str, keyword: str = LOG_TAG, duration: int = LOG_DURATION):
+def start_logcat_dump(log_file: str, duration: int = LOG_DURATION):
     def dump():
         os.makedirs(LOG_DIR, exist_ok=True)
+        subprocess.run(["adb", "logcat", "-c"])  # 清除舊 log
+
         with open(os.path.join(LOG_DIR, log_file), "w", encoding="utf-8", errors="ignore") as f:
             p = subprocess.Popen(
-                ["adb", "logcat", "-v", "time", "-s", keyword],
+                ["adb", "logcat", "-v", "time"],  # 不篩 tag，全抓
                 stdout=f,
                 stderr=subprocess.STDOUT
             )
@@ -39,7 +40,7 @@ def start_logcat_dump(log_file: str, keyword: str = LOG_TAG, duration: int = LOG
     thread.start()
     return thread
 
-def generate_markdown_report(timestamp, iterations, result, logfile):
+def generate_markdown_report(timestamp, iterations, result, logfile, matched_lines):
     os.makedirs(REPORT_DIR, exist_ok=True)
     report_file = os.path.join(REPORT_DIR, f"report_{timestamp}.md")
     with open(report_file, "w", encoding="utf-8") as f:
@@ -48,6 +49,9 @@ def generate_markdown_report(timestamp, iterations, result, logfile):
         f.write(f"- Iterations: {iterations}\n")
         f.write(f"- Keyword Check: {'PASSED' if result else 'FAILED'}\n")
         f.write(f"- Log File: `{logfile}`\n")
+        f.write(f"\n## Matched Log Lines (Top 10)\n\n")
+        for line in matched_lines[:10]:
+            f.write(f"- {line}\n")
     return report_file
 
 def generate_html_report(timestamp, iterations, result, logfile):
@@ -83,7 +87,7 @@ def run_swipe_stress_test():
     log_filename = f"talkback_log_{timestamp}.txt"
     log_thread = start_logcat_dump(log_filename)
 
-    for i in range(ITERATIONS):
+    for _ in range(ITERATIONS):
         send_keyevent(KEYCODE)
         time.sleep(SLEEP_SECONDS)
 
@@ -95,10 +99,12 @@ def run_swipe_stress_test():
     with open(full_log_path, "r", encoding="utf-8", errors="ignore") as f:
         log_content = f.read()
 
-    found = any(keyword in log_content for keyword in EXPECTED_KEYWORDS)
+    matched_lines = [line for line in log_content.splitlines()
+                     if any(keyword in line for keyword in EXPECTED_KEYWORDS)]
 
-    # Generate reports
-    md_report = generate_markdown_report(timestamp, ITERATIONS, found, log_filename)
+    found = len(matched_lines) > 0
+
+    md_report = generate_markdown_report(timestamp, ITERATIONS, found, log_filename, matched_lines)
     html_report = generate_html_report(timestamp, ITERATIONS, found, log_filename)
 
     print("\n=== Test Completed ===")
@@ -106,6 +112,7 @@ def run_swipe_stress_test():
     print(f"Markdown report: {md_report}")
     print(f"HTML report: {html_report}")
     print(f"Keyword check: {'✅ PASSED' if found else '❌ FAILED'}")
+    print(f"Matched log lines: {len(matched_lines)}")
 
 # === Entry Point ===
 if __name__ == "__main__":
