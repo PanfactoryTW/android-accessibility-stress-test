@@ -29,6 +29,7 @@ Run the script directly:
 
 ```bash
 python3 swipe_stress.py
+```
 
 ## Demo Mode (No Device Required)
 
@@ -44,3 +45,4 @@ This is helpful for:
 
 ```bash
 python3 swipe_demo.py
+```
